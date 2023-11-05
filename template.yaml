@@ -8,18 +8,41 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 600
     MemorySize: 128
 
 Resources:
-  MyHelloTestLayer:
-    Type: AWS::Serverless::LayerVersion
+  LongTestHelloWorldFunctionRole:
+    Type: AWS::IAM::Role
     Properties:
-      ContentUri: my_layer
-      CompatibleRuntimes:
-        - python3.9
-    Metadata:
-      BuildMethod: makefile
+      RoleName: LongTestHelloWorldFunctionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LongTestSam_S3Permissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: 
+                  - arn:aws:s3:::ebics-test-bucket/*      
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: arn:aws:s3:::ebics-test-bucket
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                    - "*"
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -32,8 +55,8 @@ Resources:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /dev
-            Method: post
+            Path: /{proxy+}
+            Method: any
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
