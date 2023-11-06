@@ -7,7 +7,7 @@ Description: 'sam-test-helloworld
   '
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 600
     MemorySize: 128
 Resources:
   HelloWorldFunction:
@@ -22,8 +22,8 @@ Resources:
         HelloWorld:
           Type: Api
           Properties:
-            Path: /hello
-            Method: get
+            Path: /{proxy+}
+            Method: any
       Layers:
       - Fn::GetAtt:
         - AwsSamAutoDependencyLayerNestedStack
@@ -41,7 +41,7 @@ Outputs:
   HelloWorldApi:
     Description: API Gateway endpoint URL for Prod stage for Hello World function
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/{proxy+}/
   HelloWorldFunction:
     Description: Hello World Lambda Function ARN
     Value:

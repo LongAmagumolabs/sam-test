@@ -1,0 +1,22 @@
+Lettre d'initialisation du certificat {{ VersionName_t1 }}
+--------------------------------------------------------
+
+Date:           {{ Date }}
+Banque:         {{ BankName }}
+HostID:         {{ HostID }}
+PartnerID:      {{ PartnerID }}
+UserID:         {{ UserID }}
+Version:        {{ VersionName_t1 }} {{ Version }}
+
+Certificat {{ VersionName_t2 }}
+Type:           {{ Version }}
+
+{{ Certificate }}
+
+Hash du certificat {{ VersionName_t2 }} (SHA-256):
+
+{{ Digest1 }}
+{{ Digest2 }}
+
+
+Date:                   Signature:
