@@ -98,14 +98,14 @@ Resources:
             RestApiId: !Ref MyApi
             Method: any
 
-Outputs:
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/{proxy+}/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  LongTestHelloWorldFunctionRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt LongTestHelloWorldFunctionRole.Arn
+# Outputs:
+#   HelloWorldApi:
+#     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/{proxy+}/"
+#   HelloWorldFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt HelloWorldFunction.Arn
+#   LongTestHelloWorldFunctionRole:
+#     Description: "Implicit IAM Role created for Hello World function"
+#     Value: !GetAtt LongTestHelloWorldFunctionRole.Arn
 
