@@ -5,6 +5,17 @@ Description: >
 
   Sample SAM Template for sam-test-helloworld
 
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+  CognitoUserPoolName:
+    Type: String
+    Default: SamTestUserPoolName
+  CognitoUserPoolClientName:
+    Type: String
+    Default: DangTestClientName
+
 Globals:
   Function:
     Timeout: 600
@@ -52,16 +63,10 @@ Resources:
                 Action:
                   - cognito-idp:AdminInitiateAuth
                 Resource: "*"
-  MyCognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      UserPoolId: DangTestClientId
-      ClientName: DangTestClientName
-      GenerateSecret: false
   MyCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: SamTestUserPoolName
+      UserPoolName: !Ref CognitoUserPoolName
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -71,10 +76,16 @@ Resources:
         - AttributeDataType: String
           Name: email
           Required: false
+  MyCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoUserPool
+      ClientName: !Ref CognitoUserPoolClientName
+      GenerateSecret: false
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Prod
+      StageName: !Ref Stage
       Cors: "'*'"
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
@@ -101,7 +112,7 @@ Resources:
 Outputs:
   HelloWorldApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/{proxy+}/"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/{proxy+}/"
   HelloWorldFunction:
     Description: "Hello World Lambda Function ARN"
     Value: !GetAtt HelloWorldFunction.Arn
