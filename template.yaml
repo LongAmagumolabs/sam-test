@@ -8,7 +8,7 @@ Description: >
 Parameters:
   Stage:
     Type: String
-    Default: dev
+    Default: prod
   CognitoUserPoolName:
     Type: String
     Default: SamTestUserPoolName
@@ -63,15 +63,22 @@ Resources:
                 Action:
                   - cognito-idp:AdminInitiateAuth
                 Resource: "*"
+  UserPoolDomain: 
+    Type: AWS::Cognito::UserPoolDomain 
+    Properties:
+      UserPoolId: !Ref MyCognitoUserPool 
+      Domain: "sam-authenticate-test"
   MyCognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Ref CognitoUserPoolName
+      AutoVerifiedAttributes: 
+        - email
+      UsernameAttributes:
+        - email
       Policies:
         PasswordPolicy:
           MinimumLength: 8
-      UsernameAttributes:
-        - email
       Schema:
         - AttributeDataType: String
           Name: email
@@ -81,7 +88,26 @@ Resources:
     Properties:
       UserPoolId: !Ref MyCognitoUserPool
       ClientName: !Ref CognitoUserPoolClientName
+      ExplicitAuthFlows: 
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders: 
+        - COGNITO
+      AllowedOAuthFlows: 
+        - code
+        - implicit 
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+        - aws.cognito.signin.user.admin
       GenerateSecret: false
+      CallbackURLs:
+        - 'https://samtest/callback' 
+      LogoutURLs:
+        - 'https://samtest/logout'
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -98,6 +124,30 @@ Resources:
       CodeUri: hello_world/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref MyCognitoUserPool
+          APP_CLIENT_ID: !Ref MyCognitoUserPoolClient
+          COMMON_NAME: ebics.ecodrop.net
+          COUNTRY: FR
+          DEBTOR_BANK_NAME: BNP Paribas
+          DEBTOR_BIC: BNPAFRPPXXX
+          DEBTOR_IBAN: FR7600002000105555555555521
+          HOST_ID: EBIXQUAL
+          HOST_URL: https://server-ebics.webank.fr:28103/WbkPortalFileTransfert/EbicsProtocol
+          LOCALITY: SAINT-CLOUD
+          ORGANIZATION: ECODROP
+          ORGANIZATION_UNIT: IT
+          PARTNER_ID: AMAGUMOLAITEST
+          PASSPHRASE: mysecret
+          S3_BUCKET: ebics-test-bucket
+          S3_IDS_FOLDER: order
+          S3_KEY_FOLDER: keys
+          S3_LETTER_FOLDER: letters
+          S3_TRANSFER_FOLDER: transfers
+          STATE: IDF
+          USER_ID: AMAGUMOLAITEST
+          VERSION: H003
       Architectures:
         - x86_64
       Role: !GetAtt LongTestHelloWorldFunctionRole.Arn
@@ -108,6 +158,14 @@ Resources:
             Path: /{proxy+}
             RestApiId: !Ref MyApi
             Method: any
+        SignIn:
+          Type: Api
+          Properties:
+            Auth:
+              Authorizer: NONE
+            Path: /ebics/sign-in
+            RestApiId: !Ref MyApi
+            Method: POST
 
 Outputs:
   HelloWorldApi:
