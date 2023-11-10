@@ -9,12 +9,15 @@ Parameters:
   Stage:
     Type: String
     Default: prod
-  CognitoUserPoolName:
+  CognitoArn:
     Type: String
-    Default: SamTestUserPoolName
-  CognitoUserPoolClientName:
-    Type: String
-    Default: DangTestClientName
+    Default: arn:aws:cognito-idp:ap-southeast-1:836503426071:userpool/ap-southeast-1_lO8u8fpFD
+  # CognitoUserPoolName:
+  #   Type: String
+  #   Default: SamTestUserPoolName
+  # CognitoUserPoolClientName:
+  #   Type: String
+  #   Default: DangTestClientName
 
 Globals:
   Function:
@@ -63,51 +66,53 @@ Resources:
                 Action:
                   - cognito-idp:AdminInitiateAuth
                 Resource: "*"
-  UserPoolDomain: 
-    Type: AWS::Cognito::UserPoolDomain 
-    Properties:
-      UserPoolId: !Ref MyCognitoUserPool 
-      Domain: "sam-authenticate-test"
-  MyCognitoUserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: !Ref CognitoUserPoolName
-      AutoVerifiedAttributes: 
-        - email
-      UsernameAttributes:
-        - email
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-      Schema:
-        - AttributeDataType: String
-          Name: email
-          Required: false
-  MyCognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      UserPoolId: !Ref MyCognitoUserPool
-      ClientName: !Ref CognitoUserPoolClientName
-      ExplicitAuthFlows: 
-        - ALLOW_USER_SRP_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
-        - ALLOW_ADMIN_USER_PASSWORD_AUTH
-      AllowedOAuthFlowsUserPoolClient: true
-      SupportedIdentityProviders: 
-        - COGNITO
-      AllowedOAuthFlows: 
-        - code
-        - implicit 
-      AllowedOAuthScopes:
-        - email
-        - openid
-        - profile
-        - aws.cognito.signin.user.admin
-      GenerateSecret: false
-      CallbackURLs:
-        - 'https://samtest/callback' 
-      LogoutURLs:
-        - 'https://samtest/logout'
+  # Create new cognito ----------------
+  # UserPoolDomain: 
+  #   Type: AWS::Cognito::UserPoolDomain 
+  #   Properties:
+  #     UserPoolId: !Ref MyCognitoUserPool 
+  #     Domain: "sam-authenticate-test"
+  # MyCognitoUserPool:
+  #   Type: AWS::Cognito::UserPool
+  #   Properties:
+  #     UserPoolName: !Ref CognitoUserPoolName
+  #     AutoVerifiedAttributes: 
+  #       - email
+  #     UsernameAttributes:
+  #       - email
+  #     Policies:
+  #       PasswordPolicy:
+  #         MinimumLength: 8
+  #     Schema:
+  #       - AttributeDataType: String
+  #         Name: email
+  #         Required: false
+  # MyCognitoUserPoolClient:
+  #   Type: AWS::Cognito::UserPoolClient
+  #   Properties:
+  #     UserPoolId: !Ref MyCognitoUserPool
+  #     ClientName: !Ref CognitoUserPoolClientName
+  #     ExplicitAuthFlows: 
+  #       - ALLOW_USER_SRP_AUTH
+  #       - ALLOW_REFRESH_TOKEN_AUTH
+  #       - ALLOW_ADMIN_USER_PASSWORD_AUTH
+  #     AllowedOAuthFlowsUserPoolClient: true
+  #     SupportedIdentityProviders: 
+  #       - COGNITO
+  #     AllowedOAuthFlows: 
+  #       - code
+  #       - implicit 
+  #     AllowedOAuthScopes:
+  #       - email
+  #       - openid
+  #       - profile
+  #       - aws.cognito.signin.user.admin
+  #     GenerateSecret: false
+  #     CallbackURLs:
+  #       - 'https://samtest/callback' 
+  #     LogoutURLs:
+  #       - 'https://samtest/logout'
+  
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -117,7 +122,7 @@ Resources:
         DefaultAuthorizer: MyCognitoAuthorizer
         Authorizers:
           MyCognitoAuthorizer:
-            UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+            UserPoolArn: !Ref CognitoArn
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -126,8 +131,8 @@ Resources:
       Runtime: python3.9
       Environment:
         Variables:
-          USER_POOL_ID: !Ref MyCognitoUserPool
-          APP_CLIENT_ID: !Ref MyCognitoUserPoolClient
+          USER_POOL_ID: ap-southeast-1_lO8u8fpFD
+          APP_CLIENT_ID: 5mjagamp83occkj1fj2sum4kgo
           COMMON_NAME: ebics.ecodrop.net
           COUNTRY: FR
           DEBTOR_BANK_NAME: BNP Paribas
@@ -138,15 +143,15 @@ Resources:
           LOCALITY: SAINT-CLOUD
           ORGANIZATION: ECODROP
           ORGANIZATION_UNIT: IT
-          PARTNER_ID: AMAGUMOLAITEST
-          PASSPHRASE: mysecret
+          PARTNER_ID: LONGSEO
+          PASSPHRASE: mysecert2
           S3_BUCKET: ebics-test-bucket
           S3_IDS_FOLDER: order
           S3_KEY_FOLDER: keys
           S3_LETTER_FOLDER: letters
           S3_TRANSFER_FOLDER: transfers
           STATE: IDF
-          USER_ID: AMAGUMOLAITEST
+          USER_ID: LONGSEO
           VERSION: H003
       Architectures:
         - x86_64

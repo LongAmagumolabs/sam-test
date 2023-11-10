@@ -83,6 +83,7 @@ class MyKeyRing(EbicsKeyRing):
         s3_client.put_object(Bucket = s3_bucket, Key = s3_key, Body = uploadByteStream)
 
 def lambda_handler(event, context):
+    print(event)
     try:
         # load keys from s3
         try:
@@ -136,29 +137,36 @@ def lambda_handler(event, context):
                 })
             }
         elif event.get('path') == INIT_CONNECTION_PATH:
-            #create keys (A - E - X) for user and automatically save to keyring
-            user.create_keys(keyversion='A005', bitlength=2048)
-            user.create_certificates(
-                commonName= os.environ.get('COMMON_NAME'),
-                organizationName= os.environ.get('ORGANIZATION'),
-                organizationalUnitName = os.environ.get('ORGANIZATION_UNIT'),
-                stateOrProvinceName= os.environ.get('STATE'),
-                localityName = os.environ.get('LOCALITY'),
-                countryName= os.environ.get('COUNTRY'),
-            )
+            try:
+                #create keys (A - E - X) for user and automatically save to keyring
+                user.create_keys(keyversion='A005', bitlength=2048)
+                user.create_certificates(
+                    commonName= os.environ.get('COMMON_NAME'),
+                    organizationName= os.environ.get('ORGANIZATION'),
+                    organizationalUnitName = os.environ.get('ORGANIZATION_UNIT'),
+                    stateOrProvinceName= os.environ.get('STATE'),
+                    localityName = os.environ.get('LOCALITY'),
+                    countryName= os.environ.get('COUNTRY'),
+                )
 
-            cert = user.export_certificates()
-            cert_str = json.dumps(cert, indent=4)
-            s3_client.put_object(Bucket=s3_bucket, Key=s3_cert, Body = cert_str)
+                cert = user.export_certificates()
+                cert_str = json.dumps(cert, indent=4)
+                s3_client.put_object(Bucket=s3_bucket, Key=s3_cert, Body = cert_str)
 
-            client = EbicsClient(bank, user, version=VERSION)
-            client.INI()
-            client.HIA()
-            return {
-                'statusCode': 201,
-                'headers': {'Content-Type': 'application/json'},
-                'body': json.dumps({'message': 'INI, HIA orders sended to the bank!'})
-            }
+                client = EbicsClient(bank, user, version=VERSION)
+                client.INI()
+                client.HIA()
+                return {
+                    'statusCode': 201,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'message': 'INI, HIA orders sended to the bank!'})
+                }
+            except Exception as e:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body':json.dumps({'error': str(e)})
+                }
 
         elif event.get('path') == STORE_BANK_KEYS_PATH:
             client = EbicsClient(bank, user, version=VERSION)

@@ -6,7 +6,7 @@ codeuri = "D:\\Workspace\\AWS_SAM\\sam-test-helloworld\\hello_world"
 runtime = "python3.9"
 architecture = "x86_64"
 handler = "app.lambda_handler"
-manifest_hash = "bc861eb69c566ca12a3914fab6827ebb"
+manifest_hash = "c4d1da326ffcde47fbc928835392e1fc"
 packagetype = "Zip"
 functions = ["HelloWorldFunction"]
 

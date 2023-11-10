@@ -5,25 +5,124 @@ Description: 'sam-test-helloworld
   Sample SAM Template for sam-test-helloworld
 
   '
+Parameters:
+  Stage:
+    Type: String
+    Default: prod
+  CognitoArn:
+    Type: String
+    Default: arn:aws:cognito-idp:ap-southeast-1:836503426071:userpool/ap-southeast-1_lO8u8fpFD
 Globals:
   Function:
     Timeout: 600
     MemorySize: 128
 Resources:
+  LongTestHelloWorldFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LongTestHelloWorldFunctionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: LongTestSam_S3Permissions
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:PutObject
+            - s3:GetObject
+            Resource:
+            - arn:aws:s3:::ebics-test-bucket/*
+          - Effect: Allow
+            Action: s3:ListBucket
+            Resource: arn:aws:s3:::ebics-test-bucket
+            Condition:
+              StringLike:
+                s3:prefix:
+                - '*'
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+          - Effect: Allow
+            Action:
+            - cognito-idp:AdminInitiateAuth
+            Resource: '*'
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: Stage
+      Cors: '''*'''
+      Auth:
+        DefaultAuthorizer: MyCognitoAuthorizer
+        Authorizers:
+          MyCognitoAuthorizer:
+            UserPoolArn:
+              Ref: CognitoArn
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: HelloWorldFunction
       Handler: app.lambda_handler
       Runtime: python3.9
+      Environment:
+        Variables:
+          USER_POOL_ID: ap-southeast-1_lO8u8fpFD
+          APP_CLIENT_ID: 5mjagamp83occkj1fj2sum4kgo
+          COMMON_NAME: ebics.ecodrop.net
+          COUNTRY: FR
+          DEBTOR_BANK_NAME: BNP Paribas
+          DEBTOR_BIC: BNPAFRPPXXX
+          DEBTOR_IBAN: FR7600002000105555555555521
+          HOST_ID: EBIXQUAL
+          HOST_URL: https://server-ebics.webank.fr:28103/WbkPortalFileTransfert/EbicsProtocol
+          LOCALITY: SAINT-CLOUD
+          ORGANIZATION: ECODROP
+          ORGANIZATION_UNIT: IT
+          PARTNER_ID: LONGSEO
+          PASSPHRASE: mysecert2
+          S3_BUCKET: ebics-test-bucket
+          S3_IDS_FOLDER: order
+          S3_KEY_FOLDER: keys
+          S3_LETTER_FOLDER: letters
+          S3_TRANSFER_FOLDER: transfers
+          STATE: IDF
+          USER_ID: LONGSEO
+          VERSION: H003
       Architectures:
       - x86_64
+      Role:
+        Fn::GetAtt:
+        - LongTestHelloWorldFunctionRole
+        - Arn
       Events:
         HelloWorld:
           Type: Api
           Properties:
             Path: /{proxy+}
+            RestApiId:
+              Ref: MyApi
             Method: any
+        SignIn:
+          Type: Api
+          Properties:
+            Auth:
+              Authorizer: NONE
+            Path: /ebics/sign-in
+            RestApiId:
+              Ref: MyApi
+            Method: POST
       Layers:
       - Fn::GetAtt:
         - AwsSamAutoDependencyLayerNestedStack
@@ -41,16 +140,16 @@ Outputs:
   HelloWorldApi:
     Description: API Gateway endpoint URL for Prod stage for Hello World function
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/{proxy+}/
+      Fn::Sub: https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/{proxy+}/
   HelloWorldFunction:
     Description: Hello World Lambda Function ARN
     Value:
       Fn::GetAtt:
       - HelloWorldFunction
       - Arn
-  HelloWorldFunctionIamRole:
+  LongTestHelloWorldFunctionRole:
     Description: Implicit IAM Role created for Hello World function
     Value:
       Fn::GetAtt:
-      - HelloWorldFunctionRole
+      - LongTestHelloWorldFunctionRole
       - Arn
